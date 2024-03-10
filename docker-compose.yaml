@@ -1,0 +1,75 @@
+version: '3.7'
+
+services:
+
+  currency-exchange:
+    image: sofijadangubic/2023-currency-exchange.jar:latest
+    mem_limit: 700m
+    ports:
+      - "8000:8000"
+    networks:
+      - currency-network
+    depends_on:
+      - bank-account
+    environment:
+      EUREKA.CLIENT.SERVICE-URL.DEFAULTZONE: http://naming-server:8761/eureka
+      
+  naming-server:
+    image: sofijadangubic/2023-naming-server.jar:latest
+    mem_limit: 700m
+    ports:
+      - "8761:8761"
+    networks:
+      - currency-network
+      
+  currency-conversion:
+    image: sofijadangubic/2023-currency-conversion.jar:latest
+    mem_limit: 700m
+    ports:
+      - "8100:8100"
+    networks:
+      - currency-network
+    depends_on:
+      - users-service
+    environment:
+      EUREKA.CLIENT.SERVICE-URL.DEFAULTZONE: http://naming-server:8761/eureka
+      
+  bank-account:
+    image: sofijadangubic/2023-bank-account.jar:latest
+    mem_limit: 700m
+    ports:
+      - "8200:8200"
+    networks:
+      - currency-network
+    depends_on:
+      - currency-conversion
+    environment:
+      EUREKA.CLIENT.SERVICE-URL.DEFAULTZONE: http://naming-server:8761/eureka
+      
+  users-service:
+    image: sofijadangubic/2023-users-service.jar:latest
+    mem_limit: 700m
+    ports:
+      - "8770:8770"
+    networks:
+      - currency-network
+    depends_on:
+      - naming-server
+    environment:
+      EUREKA.CLIENT.SERVICE-URL.DEFAULTZONE: http://naming-server:8761/eureka
+      
+  api-gateway:
+    image: sofijadangubic/2023-api-gateway.jar:latest
+    restart: on-failure
+    mem_limit: 700m
+    ports:
+      - "8765:8765"
+    networks:
+      - currency-network
+    depends_on:
+      - currency-exchange
+    environment:
+      EUREKA.CLIENT.SERVICE-URL.DEFAULTZONE: http://naming-server:8761/eureka
+    
+networks:
+  currency-network:
